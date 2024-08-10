@@ -5,5 +5,8 @@ module cloudflare {
     required name: str {
       default := "Cloudflare Token";
     }
+    required createdAt: datetime {
+      default := datetime_current();
+    }
   }
 }
