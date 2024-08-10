@@ -1,11 +1,17 @@
+import { type UserPermission } from "dbschema/interfaces";
 import {
   getServerSession,
   type DefaultSession,
   type NextAuthOptions,
 } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { EdgeDBAdapter } from "@auth/edgedb-adapter";
 
 import { env } from "~/env";
+
+import e from "dbschema/edgeql-js";
+import { client } from "./db";
+import { type Adapter } from "next-auth/adapters";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -17,8 +23,7 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
-      // ...other properties
-      // role: UserRole;
+      permissions: Omit<UserPermission, "id" | "user">;
     } & DefaultSession["user"];
   }
 
@@ -35,14 +40,31 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, token }) => ({
+    session: async ({ session, user }) => ({
       ...session,
       user: {
         ...session.user,
-        id: token.sub,
+        permissions: await e
+          .select(
+            e
+              .insert(e.UserPermission, {
+                user: e.select(e.User, (u) => ({
+                  filter_single: e.op(u.id, "=", e.uuid(user.id)),
+                })),
+                admin: e.op(e.count(e.select(e.User, () => ({}))), "=", 1), // Make the first user an admin
+              })
+              .unlessConflict((p) => ({ on: p.user, else: p })),
+            () => ({
+              ...e.UserPermission["*"],
+              id: false,
+              user: false,
+            }),
+          )
+          .run(client),
       },
     }),
   },
+  adapter: EdgeDBAdapter(client) as Adapter, // TODO: File an issue on this type clashing
   providers: [
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,

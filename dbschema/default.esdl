@@ -63,6 +63,15 @@ module default {
  
     constraint exclusive on ((.identifier, .token))
   }
+
+  type UserPermission {
+    required user: User {
+      constraint exclusive;
+    };
+    required admin: bool {
+      default := false;
+    };
+  }
 }
  
 # Disable the application of access policies within access policies
