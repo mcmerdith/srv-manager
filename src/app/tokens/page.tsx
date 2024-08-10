@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import checkServerAuthSession from "~/lib/server_auth";
+import { formatDate } from "~/lib/utils";
 import { getTokens } from "~/server/db";
 
 export default async function TokensPage() {
@@ -20,7 +21,7 @@ export default async function TokensPage() {
 
   return (
     <>
-      <h1>Your API Tokens</h1>
+      <h1 className="text-2xl font-bold">Your API Tokens</h1>
       <Table>
         <TableHeader>
           <TableRow>
@@ -35,7 +36,7 @@ export default async function TokensPage() {
             <TableRow key={token.id}>
               <TableCell>{token.name}</TableCell>
               <TableCell>{token.key.replaceAll(/./g, "*")}</TableCell>
-              <TableCell>{token.createdAt.toLocaleString()}</TableCell>
+              <TableCell>{formatDate(token.createdAt)}</TableCell>
               <TableCell className="flex flex-row gap-2">
                 <Button
                   size="icon"
