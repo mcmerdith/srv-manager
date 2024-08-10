@@ -31,6 +31,7 @@ export default async function RootLayout({
           "min-w-screen min-h-screen bg-background text-foreground",
           darkMode && "dark",
         )}
+        data-darkmode-target
       >
         <DarkModeUpdater />
         <TRPCReactProvider>
